@@ -24,7 +24,6 @@ def health_check():
     """
     Returns server status. Useful for uptime monitors and Docker health checks.
     """
-    import os
     return jsonify({
         "status": "ok",
         "version": os.getenv("APP_VERSION", "1.0.0")
