@@ -144,7 +144,9 @@ E --> H[Learning Resources]
 ---
 
 ## Quick Start
+
 ### Linux/macOS Setup
+
 ```bash
 git clone https://github.com/komalharshita/devpath.git
 cd devpath
@@ -158,6 +160,7 @@ python app.py
 ```
 
 ### Windows Setup
+
 ```powershell
 git clone https://github.com/komalharshita/devpath.git
 cd devpath
@@ -169,7 +172,8 @@ pip install -r requirements.txt
 
 python app.py
 ```
-### Verify Everything Works
+
+## Verify Everything Works
 
 Run the test suite:
 
@@ -180,29 +184,25 @@ python tests/test_basic.py
 Expected output:
 
 ```bash
-27 passed, 0 failed
+All tests passed
 ```
 
-
-
-
 ---
+
 ## Troubleshooting
-### Virtual Environment Activation Issues
-#### Linux/macOS
 
-If `source venv/bin/activate` does not work:
+<details>
+<summary>Virtual Environment Issues</summary>
 
-- Ensure the virtual environment was created successfully
-- Check whether Python 3 is installed:
+### Linux/macOS
+
+If activation fails, verify Python 3 is installed:
 
 ```bash
 python3 --version
 ```
 
-
-
-#### Windows PowerShell
+### Windows PowerShell
 
 If you see:
 
@@ -210,27 +210,28 @@ If you see:
 running scripts is disabled on this system
 ```
 
-Run PowerShell as Administrator and execute:
+Run:
 
 ```powershell
-Set-ExecutionPolicy RemoteSigned
+Set-ExecutionPolicy -Scope Process RemoteSigned
 ```
 
-Then try activating again:
+Then activate the environment again:
 
 ```powershell
 venv\Scripts\activate
 ```
-### Dependency Installation Problems
-If `pip install -r requirements.txt` fails:
 
-### Upgrade pip
+</details>
+
+<details>
+<summary>Dependency & Flask Issues</summary>
+
+If dependency installation fails, first upgrade pip:
 
 ```bash
 python -m pip install --upgrade pip
 ```
-
-### Check Python Version
 
 Ensure Python 3.9+ is installed:
 
@@ -238,43 +239,33 @@ Ensure Python 3.9+ is installed:
 python --version
 ```
 
-### Reinstall Requirements
+Reinstall requirements without cache:
 
 ```bash
 pip install -r requirements.txt --no-cache-dir
 ```
-### Flask Setup Issues
-If you see:
 
-```bash
-ModuleNotFoundError: No module named 'flask'
-```
-
-Install dependencies again:
-
-```bash
-pip install -r requirements.txt
-```
-
-If Flask still does not run:
+If Flask is still missing:
 
 ```bash
 pip install flask
 ```
-### Port Already in Use
-If you see:
 
-```bash
-Address already in use
-```
+</details>
 
-Run the application on another port:
+<details>
+<summary>Port Already in Use</summary>
+
+If port 5000 is already in use, run the app on another port:
 
 ```bash
 flask run --port 5001
 ```
 
-Or stop the process using port 5000.
+Or stop the process currently using port 5000.
+
+</details>
+
 ---
 
 ## Project Structure
