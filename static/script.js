@@ -545,8 +545,6 @@ if (clearFiltersBtn) {
     submitBtn.setAttribute("aria-busy", isLoading);
     btnLabel.style.display = isLoading ? "none" : "inline";
     btnLoading.style.display = isLoading ? "inline-flex" : "none";
-    btnLabel.style.display = isLoading ? "none" : "inline";
-    btnLoading.style.display = isLoading ? "inline" : "none";
 
     if (isLoading) {
       // Show the results section with only the loading indicator visible
@@ -617,8 +615,8 @@ if (clearFiltersBtn) {
     var tagsRow = document.createElement("div");
     tagsRow.className = "project-card-tags";
 
-    // Show the first two skills as tags
-    (project.skills || []).slice(0, 2).forEach(function (skill) {
+    // Show all project skills as tags so users can see the full match
+    (project.skills || []).forEach(function (skill) {
       tagsRow.appendChild(createTag(skill, "skill"));
     });
 
