@@ -517,8 +517,6 @@ updateProfileWidgets();
 
 
   // Manages the loading state of the form and results section(whats visible or not)
-=======
->>>>>>> upstream/main
   function setLoadingState(isLoading) {
     submitBtn.disabled = isLoading;
     submitBtn.setAttribute("aria-busy", isLoading ? "true" : "false");
@@ -532,7 +530,6 @@ updateProfileWidgets();
       resultsSection.scrollIntoView({ behavior: "smooth" });
     } else {
       resultsLoadingEl.style.display = "none";
-<<<<<<< HEAD
       resultsGrid.style.display = "grid"; //switch back to grid layout
     }
   }
@@ -581,14 +578,11 @@ updateProfileWidgets();
     });
 
     resultsSection.scrollIntoView({ behavior: "smooth" });
-=======
-    }
   }
 
   function truncate(text, maxLength) {
     text = text || "";
     return text.length > maxLength ? text.slice(0, maxLength) + "..." : text;
->>>>>>> upstream/main
   }
 
   function createTag(text, type) {
