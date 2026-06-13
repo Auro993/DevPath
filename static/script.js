@@ -744,9 +744,45 @@ function recordSearch() {
   setLoadingState(true);
 
           renderResults(data.projects || [], data.message);
+          renderResults(Array.isArray(data.projects) ? data.projects : [], data.message);
         })
-        .catch(function () {
+        .catch(function (err) {
           setLoadingState(false);
+          var generalErr = document.getElementById("form-error-general");
+          if (generalErr) {
+            generalErr.textContent = "Something went wrong. Please try again.";
+          }
+        });
+        })
+
+    });
+        
+      }; 
+
+  requestAnimationFrame(function () {
+
+    var payload = {
+      skills: skillsHidden.value.trim() || skillsTextInput.value.trim(),
+      level: document.getElementById("level").value,
+      interest: document.getElementById("interest").value,
+      time: document.getElementById("time").value
+    };
+
+    fetch("/api/recommend", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    })
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+
+        setLoadingState(false);
+
+        if (data.error) {
           var generalErr = document.getElementById("form-error-general");
           if (generalErr) {
             generalErr.textContent = "Network error. Please try again.";
@@ -844,14 +880,13 @@ function recordSearch() {
     return text.length > maxLength ? text.slice(0, maxLength) + "..." : text;
   }
 
-  function createTag(text, type) {
-    var span = document.createElement("span");
-    span.className = "project-tag project-tag--" + normalize(type).replace(/[^a-z0-9_-]/g, "-");
-    span.textContent = text;
-    return span;
+    recordSearch();
+    resultsSection.scrollIntoView({ behavior: "smooth" });
+
   }
 
   function buildProjectCard(project) {
+    
     var card = document.createElement("div");
     card.className = "project-card";
 
@@ -1296,21 +1331,18 @@ if (
     threshold: 0
   };
 
-  var observer = new IntersectionObserver(function (entries) {
-    entries.forEach(function (entry) {
-      if (entry.isIntersecting) {
-        var id = entry.target.getAttribute("id");
-        navLinks.forEach(function (link) {
-          var href = link.getAttribute("href");
-          if (href === "#" + id) {
-            link.classList.add("active");
-          } else if (href && href.startsWith("#")) {
-            link.classList.remove("active");
-          }
-        });
+  if (scrollTopBtn) {
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    scrollTopBtn.addEventListener('click', function () {
+      if (atBottom) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
       }
     });
-  }, observerOptions);
+    handleScroll();
+  }
+}());
 
   sections.forEach(function (sec) {
     observer.observe(sec);
