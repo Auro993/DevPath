@@ -75,23 +75,34 @@ if (isIndexPage) {
   // Tracks currently selected skills to prevent duplicates
   var selectedSkills = [];
 
-  // ----------------------------------------------------------
-  // Reset skill selection (used by Clear Filters and form reset)
-  // ----------------------------------------------------------
-  function resetSkillSelection() {
-    selectedSkills = [];
-    if (skillsHidden) skillsHidden.value = "";
-    if (chipsSelectedEl) chipsSelectedEl.innerHTML = "";
-    if (skillsTextInput) skillsTextInput.value = "";
-    if (suggestionsDiv) { suggestionsDiv.innerHTML = ""; suggestionsDiv.style.display = "none"; }
-    if (quickPickChips) {
-      quickPickChips.forEach(function (chip) {
-        chip.classList.remove("active", "selected");
-        chip.setAttribute("aria-pressed", "false");
-      });
-    }
-    clearFieldError("skills-error");
-  }
+// Points awarded per action
+var POINTS_PER_SEARCH     = 5;
+var POINTS_PER_VIEW       = 10;
+var POINTS_PER_CODE_OPEN  = 15;
+var POINTS_PER_COMPLETION = 30;
+
+var PROGRESS_TARGET_SEARCHES     = 10;
+var PROGRESS_TARGET_VIEWS        = 10;
+var PROGRESS_TARGET_CODE_OPENS   = 10;
+var PROGRESS_TARGET_COMPLETIONS  = 5;
+
+// Maximum achievable points given the targets above
+var PROGRESS_MAX_POINTS = (
+  PROGRESS_TARGET_SEARCHES    * POINTS_PER_SEARCH     +   // 50
+  PROGRESS_TARGET_VIEWS       * POINTS_PER_VIEW       +   // 100
+  PROGRESS_TARGET_CODE_OPENS  * POINTS_PER_CODE_OPEN  +   // 150
+  PROGRESS_TARGET_COMPLETIONS * POINTS_PER_COMPLETION     // 150
+);  // total = 450
+
+function computeProgressPoints() {
+  var raw =
+    progress.searches      * POINTS_PER_SEARCH     +
+    progress.projectViews  * POINTS_PER_VIEW       +
+    progress.codeOpens     * POINTS_PER_CODE_OPEN  +
+    progress.completions   * POINTS_PER_COMPLETION;
+  // Clamp stored points so they never exceed max — prevents aria-valuenow > 100
+  progress.points = Math.min(raw, PROGRESS_MAX_POINTS);
+}
 
   // Clear Filters Button Functionality
   var clearFiltersBtn = document.getElementById("clear-filters-btn");
@@ -119,20 +130,40 @@ if (isIndexPage) {
   // Skill chip manager
   // ----------------------------------------------------------
 
-  // Skills list for autocomplete (from skills.js)
-  var availableSkills = [];
-  if (typeof skills !== "undefined" && Array.isArray(skills) && skills.length > 0) {
-    availableSkills = skills.map(function (s) { return s.label; });
-  } else {
-    // Fallback if skills.js doesn't load
-    availableSkills = [
-      "Python", "JavaScript", "Java", "C++", "HTML", "CSS", "React", "Node.js",
-      "Django", "Flask", "SQL", "MongoDB", "AWS", "Docker", "Kubernetes", "Git",
-      "C#", "Ruby", "PHP", "Go", "Swift", "TypeScript", "Angular", "Vue.js",
-      "Spring", "Flutter", "TensorFlow", "PyTorch", "Data Science",
-      "Machine Learning", "Artificial Intelligence", "DevOps", "Cybersecurity",
-      "Blockchain", "UI/UX Design", "Game Development", "CI/CD", "REST API", "GraphQL",
-      "Rust", "Kotlin"
+function updateProfileWidgets() {
+  var pointsEl = document.getElementById("progress-points");
+  var statsEl = document.getElementById("progress-stats");
+  var meterFill = document.getElementById("progress-meter-fill");
+  var badgesEl = document.getElementById("progress-badges");
+  var achievementList = document.getElementById("achievement-list");
+  var leaderboardList = document.getElementById("leaderboard-list");
+  var historyList = document.getElementById("completed-history-list");
+  var completionBtn = document.getElementById("btn-mark-complete");
+
+  if (pointsEl) pointsEl.textContent = progress.points;
+  if (statsEl) {
+    statsEl.innerHTML =
+      "<li><strong>Searches</strong><span>" + progress.searches + "</span></li>" +
+      "<li><strong>Projects Viewed</strong><span>" + progress.projectViews + "</span></li>" +
+      "<li><strong>Code Opens</strong><span>" + progress.codeOpens + "</span></li>" +
+      "<li><strong>Projects Completed</strong><span>" + progress.completions + "</span></li>";
+  }
+  if (meterFill) {
+    var percentage = Math.min(
+      100,
+      Math.round((progress.points / PROGRESS_MAX_POINTS) * 100)
+    );
+    meterFill.style.width = percentage + "%";
+    meterFill.setAttribute("aria-valuenow", String(percentage));
+    meterFill.textContent = percentage + "%";
+  }
+  if (badgesEl) {
+    var badges = [
+      ["first_search", "First Search"],
+      ["project_explorer", "Project Explorer"],
+      ["code_starter", "Code Starter"],
+      ["completionist", "Completionist"],
+      ["roadmap_runner", "Roadmap Runner"]
     ];
   }
 }
@@ -693,12 +724,12 @@ updateProfileWidgets();
     btnLoading.style.display = isLoading ? "inline-flex" : "none";
 
     if (isLoading) {
-      // Show the results section with only the loading indicator visible
-      resultsSection.style.display = "block";
-      resultsLoadingEl.style.display = "block";
+      resultsGrid.innerHTML = "";         
       resultsGrid.style.display = "none";
       resultsEmptyEl.style.display = "none";
-      // Scroll down so the user can see the spinner without manually scrolling
+      resultsEmptyEl.textContent = "";
+      resultsLoadingEl.style.display = "block";
+      resultsSection.style.display = "block";
       resultsSection.scrollIntoView({ behavior: "smooth" });
     } else {
       resultsLoadingEl.style.display  = "none";
@@ -793,6 +824,7 @@ updateProfileWidgets();
   }
 
   function buildProjectCard(project) {
+    
     var card = document.createElement("div");
     card.className = "project-card";
 
@@ -849,26 +881,6 @@ updateProfileWidgets();
     card.appendChild(footer);
     return card;
   }
-
-  renderSavedProjects();
-
-  function renderResults(projects, message) {
-    resultsSection.style.display = "block";
-    resultsLoadingEl.style.display = "none";
-    resultsGrid.textContent = "";
-    if (!projects || projects.length === 0) {
-      resultsGrid.style.display = "none";
-      resultsEmptyEl.style.display = "block";
-      emptyMessageEl.textContent = message || "Try adjusting your skills or choosing a different interest area.";
-      resultsSection.scrollIntoView({ behavior: "smooth" });
-      return;
-    }
-    resultsEmptyEl.style.display = "none";
-    resultsGrid.style.display = "grid";
-    projects.forEach(function (project) { resultsGrid.appendChild(buildProjectCard(project)); });
-    resultsSection.scrollIntoView({ behavior: "smooth" });
-  }
-
 
   function runProjectSearch(query) {
     if (!query) return;
@@ -1218,33 +1230,35 @@ if (
           fetchBtn.textContent = 'Fetch Skills';
       }
   });
-}
+  update();
+})();
 
-/* ---- Scroll-to-top button ---- */
+(function initScrollSpy() {
+  var sections = document.querySelectorAll("section[id], header[id]");
+  var navLinks = document.querySelectorAll(".nav-link, .nav-mobile-link");
 
-/* Show the button only when the user has scrolled more than 300px */
-var SCROLL_THRESHOLD = 300;
+  if (sections.length === 0 || navLinks.length === 0) return;
 
-/* Get the button element; guard against pages that do not have it */
-var scrollTopBtn = document.getElementById('scroll-top-btn');
+  var observerOptions = {
+    root: null,
+    rootMargin: "-20% 0px -70% 0px",
+    threshold: 0
+  };
 
-/* Add or remove the .visible class based on scroll position */
-function handleScroll() {
-  if (!scrollTopBtn) return;
-  if (window.pageYOffset > SCROLL_THRESHOLD) {
-    scrollTopBtn.classList.add('visible');
-  } else {
-    scrollTopBtn.classList.remove('visible');
+  if (scrollTopBtn) {
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    scrollTopBtn.addEventListener('click', function () {
+      if (atBottom) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      }
+    });
+    handleScroll();
   }
-}
+}());
 
-/* Smooth-scroll to the very top of the page */
-function scrollToTop() {
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-/* Only wire up listeners if the button exists on this page */
-if (scrollTopBtn) {
-    window.addEventListener('scroll', handleScroll);
-    scrollTopBtn.addEventListener('click', scrollToTop);
-}
+  sections.forEach(function (sec) {
+    observer.observe(sec);
+  });
+})();
